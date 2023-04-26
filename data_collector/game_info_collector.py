@@ -4,10 +4,9 @@ import os
 import xmltodict
 import pandas as pd
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
-GRAPH_PATH = "data/graph"
-GAME_INFO_PATH = "data/game_info.csv"
-
+from ENV_CONSTANTS import GRAPH_PATH, GAME_INFO_PATH, edgeType_NodeMap
 
 def get_suggested_player_counts(data_dict):
     # Extract the best player counts for this game based on the BGG user poll
@@ -91,7 +90,7 @@ def visit_game_page(game_id):
         all of the mechanics, categories, 'families', designers, artists, publishers,
     """
     response = requests.get(
-        "https://www.boardgamegeek.com/xmlapi2/thing?id=" + str(game_id) + "&stats=1")
+        "https://www.boardgamegeek.com/xmlapi2/thing?id=" + str(game_id) + "&stats=1&comments=1")
     # Convert the XML response to a dictionary
     data_dict = xmltodict.parse(response.content)
     if 'items' not in data_dict:
@@ -163,20 +162,20 @@ def process_page(page_number):
             for edge, value in edges.items():
                 file_path = GRAPH_PATH + ".csv"
                 include_header = not (os.path.isfile(file_path))
-                print(edge)
-                print(value)
                 if edge == 'suggestedPlayerCount':
                     df = pd.DataFrame({
                         "game_id": [game_id] * len(value['value']),
-                        "target": "playerCount",
-                        "type": "suggestedPlayerCount",
+                        "target": value['value'],
+                        "target_type": ["playerCount"] * len(value['value']),
+                        "edge_type": ["suggestedPlayerCount"] * len(value['value']),
                         "weight": value['weight']
                     })
                 else:
                     df = pd.DataFrame({
                         "game_id": [game_id] * len(value),
                         "target": value,
-                        "type": [edge] * len(value),
+                        "target_type": edgeType_NodeMap[edge],
+                        "edge_type": [edge] * len(value),
                         "weight": [1] * len(value)
                     })
                 df.to_csv(file_path, index=False,
@@ -188,7 +187,7 @@ response = requests.get("https://boardgamegeek.com/browse/boardgame/")
 soup = BeautifulSoup(response.content, 'html.parser')
 num_pages = int(soup.find('a', title='last page').text.strip("[] "))
 boardgames = []
-for page_number in range(1, 2):
+for page_number in tqdm(range(1, min(num_pages, 21))):
     boardgames.extend(process_page(page_number))
 include_header = not (os.path.isfile(GAME_INFO_PATH))
 pd.DataFrame(boardgames).to_csv(GAME_INFO_PATH,
