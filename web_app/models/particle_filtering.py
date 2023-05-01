@@ -1,13 +1,13 @@
 from neo4j import GraphDatabase
 import time
-from game import Game
-from neo4j_info import PASSWORD, USER_NAME, URL
+from models.game import Game
+from models.neo4j_info import PASSWORD, USER_NAME, URL
 
 password = PASSWORD
 user_name = USER_NAME
 url = URL
 
-def game_recommendations(node_id_list, num_particles=10, c=0.15):
+def game_recommendations(node_id_list, num_particles=100, c=0.45):
     """
     Particle Filtering based on https://github.com/DenisGallo/Neo4j-ParticleFiltering/blob/master/src/main/java/pfiltering/ParticleFiltering.java
     Finds nodes similar to input nodes by traversing the graph using particles
@@ -34,27 +34,36 @@ def game_recommendations(node_id_list, num_particles=10, c=0.15):
         RETURN n
         """
         )
+        node_id_list = [int(id) if id.isnumeric() else id for id in node_id_list]
         result = transaction.run(query, node_id_list=node_id_list)
         for node in result:
             p[node['n'].get("id")] = (1/tao)/len(node_id_list)
             v[node['n'].get("id")] = (1/tao)/len(node_id_list)
-
+        print(p)
         ### Iterate through neighbors until the particles degrade to 0
         while(len(p.keys())):
             temp = {}
             for node in p.keys():
                 particles = p[node] * (1-c)
                 neighbors, total_weight = get_neighbors(transaction, node)
+                print(f"{particles} particles left to check {node}")
+                print(f"Found {len(neighbors)} Neighbors: {neighbors[:2]} with a total weight of {total_weight}")
+                i = 0
                 for neighbor_id, neighbor_weight in neighbors:
+                    i += 1
+                    print(f"Checking neighbor {i}: {neighbor_id}")
+                    print(f"{particles} particles remaining")
                     if particles <= tao:
                         break
-                    passing = particles * (neighbor_weight / total_weight)
+                    # passing = particles * (neighbor_weight / total_weight) ## Some users have rated a lot of games, so their total weight is too large and makes the particle decay instantly
+                    passing = particles * (neighbor_weight * 0.95) # All weights in the graph are (0,1]
                     if passing < tao:
                         passing = tao
                     particles -= passing
                     if neighbor_id in temp:
                         passing += temp[neighbor_id]
                     temp[neighbor_id] = passing
+            print(f"Finished checking all these neighbors")
             p = temp
             for id, value in p.items():
                 if id in v:
@@ -65,14 +74,14 @@ def game_recommendations(node_id_list, num_particles=10, c=0.15):
         ### Filter the similar nodes for games only
         similar_games = []
         for node_id, similarity in v.items():
-            if type(node_id) == int and node_id not in node_id_list:
+            if str(node_id).isnumeric() and node_id not in node_id_list:
                 similar_games.append((node_id, similarity))
 
         ### Find the information for each game
         
         recommendations = get_game_info(transaction, similar_games)
         transaction.close()
-    print(f"Recommendations took {time.time()-start_time} seconds to compute")
+    print(f"Recommendations took {time.time()-start_time} seconds to compute and found {len(recommendations)} recommendations")
     return recommendations
 
 
@@ -137,7 +146,7 @@ def get_game_info(tx, similar_games):
             attr["id"] = record.get("n.id")
             attr["num_ratings"] = record.get("n.num_ratings")
             attr["name"] = record.get("n.name")
-            attr["short_descrption"] = record.get("n.short_descrption")
+            attr["short_descrption"] = record.get("n.short_description")
             attr["long_description"] = record.get("n.long_description")
             attr["complexity_score"] = record.get("n.complexity_socre")
             attr["year_published"] = record.get("n.year_published")
