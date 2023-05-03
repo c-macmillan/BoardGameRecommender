@@ -28,12 +28,13 @@ async def get_recommendations(input: Input):
                 add_game = False
         if add_game:
             filtered_games.append(game)
-            
+
     if len(filtered_games) > 1:
         recommended_games_json = jsonable_encoder(filtered_games)
     else:
         print("Couldn't find games within complexity and length requirement")
         recommended_games_json = jsonable_encoder(recommended_games)
+    print(f"Filtered out {len(recommended_games)-len(filtered_games)} games based on complexity/length")
 
     # Return the recommended nodes as a response
     return {"recommended_games": recommended_games_json}

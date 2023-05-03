@@ -18,14 +18,14 @@ with col1:
     for node_name in initial_node_names:
         initial_node_ids.append(name2nodeID[node_name])
 
-expected_playtime = st.slider("How long do you want the game to last?", 15,180,step=15)
-expected_complexity = st.select_slider("How much brain power do you want to use?", ["None", "Casual", "Smarty Pants", "Einstien"])
-complexityMap = {
-    "None":1,
-    "Casual":2,
-    "Smarty Pants": 3,
-    "Einstien": 4
-}
+    expected_playtime = st.slider("How long do you want the game to last?", 15,180,step=15)
+    expected_complexity = st.select_slider("How much brain power do you want to use?", ["None", "Casual", "Smarty Pants", "Einstein"])
+    complexityMap = {
+        "None":1,
+        "Casual":2,
+        "Smarty Pants": 3,
+        "Einstein": 4
+    }
 expected_complexity = complexityMap[expected_complexity]
 
 with col2:
@@ -46,6 +46,9 @@ with col2:
             recommended_games = response.json()['recommended_games']
         if recommended_games:
             made_recommendations = True
+        else:
+            made_recommendations = False
+            st.warning("Couldn't find any games to recommend with those inputs")
     else:
         made_recommendations = False
 
@@ -68,6 +71,9 @@ if made_recommendations:
                     desc = recommendation.get('long_description')
                     if not desc:
                         desc = ""
+
                     st.write(desc[:100] + "...")
+                link = f"https://boardgamegeek.com/boardgame/{recommendation['id']}/"
+                st.markdown(f"[Learn more here]({link})")
         
         st.divider()
