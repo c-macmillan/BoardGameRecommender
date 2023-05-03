@@ -1,11 +1,16 @@
 from neo4j import GraphDatabase
 import time
+import os
 from models.game import Game
-from models.neo4j_info import PASSWORD, USER_NAME, URL
 
-password = PASSWORD
-user_name = USER_NAME
-url = URL
+password = os.getenv('PASSWORD')
+user_name = os.getenv('USER_NAME')
+url = os.getenv('URL')
+
+print("Hopefully this works???")
+print(url)
+print(user_name)
+print(password)
 
 def game_recommendations(node_id_list, num_particles=100, c=0.45):
     """

@@ -4,7 +4,7 @@ import requests
 
 
 st.title("Board Game Recommendations")
-with open("data/name2nodeID.json", 'r') as f:
+with open("static_data/name2nodeID.json", 'r') as f:
     name2nodeID = json.load(f)
 
 col1, col2 = st.columns([3,1])
@@ -17,6 +17,17 @@ with col1:
     initial_node_ids = []
     for node_name in initial_node_names:
         initial_node_ids.append(name2nodeID[node_name])
+
+expected_playtime = st.slider("How long do you want the game to last?", 15,180,step=15)
+expected_complexity = st.select_slider("How much brain power do you want to use?", ["None", "Casual", "Smarty Pants", "Einstien"])
+complexityMap = {
+    "None":1,
+    "Casual":2,
+    "Smarty Pants": 3,
+    "Einstien": 4
+}
+expected_complexity = complexityMap[expected_complexity]
+
 with col2:
     st.write("")
     st.write("")
@@ -26,7 +37,9 @@ with col2:
             url = "http://127.0.0.1:8000/particle_filtering"
 
             # Define the query parameters
-            params = {"ids": initial_node_ids}
+            params = {"ids": initial_node_ids,
+                      "expected_play_time": expected_playtime,
+                      "expected_complexity": expected_complexity}
 
             # Make a GET request to the URL endpoint, passing the query parameters
             response = requests.post(url, json=params)
