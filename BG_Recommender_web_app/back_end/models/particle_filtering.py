@@ -7,11 +7,6 @@ password = os.getenv('PASSWORD')
 user_name = os.getenv('USER_NAME')
 url = os.getenv('URL')
 
-print("Hopefully this works???")
-print(url)
-print(user_name)
-print(password)
-
 def game_recommendations(node_id_list, num_particles=10, c=0.1):
     """
     Particle Filtering based on https://github.com/DenisGallo/Neo4j-ParticleFiltering/blob/master/src/main/java/pfiltering/ParticleFiltering.java
@@ -24,7 +19,9 @@ def game_recommendations(node_id_list, num_particles=10, c=0.1):
         A list of game objects that are similar to the input nodes
     """
     start_time = time.time()
+    print(f"Trying to connect to neo4j using {user_name}, {password}, {url}")
     driver = GraphDatabase.driver(url, auth=(user_name, password))
+    print("Connected to neo4j")
     p = {}
     v = {}
     tao = 1.0/num_particles

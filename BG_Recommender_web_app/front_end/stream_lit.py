@@ -28,13 +28,16 @@ with col1:
     }
 expected_complexity = complexityMap[expected_complexity]
 
+response = requests.post("http://fastapi:8000/test")
+st.write(response.json()['message'])
+
 with col2:
     st.write("")
     st.write("")
     if st.button("Get Recommendations"):
         with st.spinner("Collecting recommendations"):
             # Define the URL endpoint of the FastAPI application
-            url = "http://127.0.0.1:8000/particle_filtering"
+            url = "http://fastapi:8000/particle_filtering"
 
             # Define the query parameters
             params = {"ids": initial_node_ids,

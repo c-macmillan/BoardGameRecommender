@@ -1,5 +1,3 @@
-from typing import Any
-
 
 class Game():
     def __init__(self, attr):

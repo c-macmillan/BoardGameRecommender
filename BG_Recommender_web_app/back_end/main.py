@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from models.particle_filtering import game_recommendations
 from pydantic import BaseModel
-from models.game import Game
+import uvicorn
 
 class Input(BaseModel):
     ids : list
@@ -10,6 +10,10 @@ class Input(BaseModel):
     expected_play_time : int | None = None
 
 app = FastAPI()
+
+@app.post("/test")
+async def get_test():
+    return {"message": "You received a response"}
 
 @app.post("/particle_filtering")
 async def get_recommendations(input: Input):
@@ -38,3 +42,7 @@ async def get_recommendations(input: Input):
 
     # Return the recommended nodes as a response
     return {"recommended_games": recommended_games_json}
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8080)
