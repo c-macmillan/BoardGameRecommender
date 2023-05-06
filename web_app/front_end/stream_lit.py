@@ -1,11 +1,16 @@
 import streamlit as st
-import json
 import requests
+import pickle
+import os
 
+try:
+    fastapi = os.getenv('FASTAPI_URL') ## Used if deployed to Google Run
+except:
+    fastapi = "http://fastapi:8000" ## Used if running through the docker-compose
 
 st.title("Board Game Recommendations")
-with open("static_data/name2nodeID.json", 'r') as f:
-    name2nodeID = json.load(f)
+with open("static_data/name2nodeID.pickle", 'rb') as f:
+    name2nodeID = pickle.load(f)
 
 col1, col2 = st.columns([3,1])
 
@@ -28,16 +33,13 @@ with col1:
     }
 expected_complexity = complexityMap[expected_complexity]
 
-response = requests.post("http://fastapi:8000/test")
-st.write(response.json()['message'])
-
 with col2:
     st.write("")
     st.write("")
     if st.button("Get Recommendations"):
         with st.spinner("Collecting recommendations"):
             # Define the URL endpoint of the FastAPI application
-            url = "http://fastapi:8000/particle_filtering"
+            url = f"{fastapi}/particle_filtering"
 
             # Define the query parameters
             params = {"ids": initial_node_ids,
