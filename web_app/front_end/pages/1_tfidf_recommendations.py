@@ -8,45 +8,25 @@ fastapi = os.getenv('FASTAPI_URL') ## Used if deployed to Google Run
 if fastapi is None:
     fastapi = "http://fastapi:8000" ## Used if running through the docker-compose
 
-st.title("Board Game Recommendations")
-st.subheader("Find new games to try based on your preferences!")
+
 with open("static_data/name2nodeID.pickle", 'rb') as f:
     name2nodeID = pickle.load(f)
 
-col1, col2 = st.columns([3,1])
 
-with col1:
-    initial_node_names = st.multiselect(
-        'Choose which games, categories, mechanics, etc that you are interested in by typing in the search below',
-        list(name2nodeID.keys()))
+available_games = [name for name in name2nodeID.keys() if name.startswith("Game")]
 
-    initial_node_ids = []
-    for node_name in initial_node_names:
-        initial_node_ids.append(name2nodeID[node_name])
+initial_game_name = st.selectbox(
+    'Choose a game that you want to get recommendations for',
+    available_games)
 
-#     expected_playtime = st.slider("How long do you want the game to last?", 15,180,step=15)
-#     expected_complexity = st.select_slider("How much brain power do you want to use?", ["None", "Casual", "Smarty Pants", "Einstein"])
-#     complexityMap = {
-#         "None":1,
-#         "Casual":2,
-#         "Smarty Pants": 3,
-#         "Einstein": 4
-#     }
-# expected_complexity = complexityMap[expected_complexity]
-st.write("These recommendations are based on the Particle Filtering algorithm, which is a proposed replacement of Personalized Page Ranking")
-with col2:
-    st.write("")
-    st.write("")
-    if st.button("Get Recommendations"):
+game_id = name2nodeID[initial_game_name]
+
+if st.button("Get Recommendations"):
         with st.spinner("Collecting recommendations"):
-            # Define the URL endpoint of the FastAPI application
-            url = f"{fastapi}/particle_filtering"
 
-            # Define the query parameters
-            params = {"ids": initial_node_ids,
-                    #   "expected_play_time": expected_playtime,
-                    #   "expected_complexity": expected_complexity
-                    }
+            url = f"{fastapi}/tfidf_similarity"
+            params = {"id": game_id
+                      }
 
             # Make a GET request to the URL endpoint, passing the query parameters
             response = requests.post(url, json=params)
@@ -56,8 +36,9 @@ with col2:
         else:
             made_recommendations = False
             st.warning("Couldn't find any games to recommend with those inputs")
-    else:
-        made_recommendations = False
+else:
+    made_recommendations = False
+
 
 
 if made_recommendations:
@@ -70,7 +51,7 @@ if made_recommendations:
                 except:
                     st.image(recommendation.get('thumbnail_url'), caption=recommendation['name'])
                 st.write(f"Average rating: {round(recommendation['avg_rating'],1)} by {recommendation['num_ratings']} users")
-                st.write(f"Particle Filtering similarity to inputs: {round(recommendation['similarity'],2)}")
+                st.write(f"Cosine similarity of descriptions: {round(recommendation['similarity'],2)}")
                 try:
                     st.write(f"Description: {recommendation['short_description']}")
                 except:

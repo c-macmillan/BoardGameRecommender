@@ -1,13 +1,17 @@
 from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from models.particle_filtering import game_recommendations
+from models.tfidf_search import get_top_n_games
 from pydantic import BaseModel
 import uvicorn
 
-class Input(BaseModel):
+class Particle_Filtering_Input(BaseModel):
     ids : list
-    expected_complexity : int | None = None
-    expected_play_time : int | None = None
+    num_recs : int | None = 10
+
+class TFIDF_Input(BaseModel):
+    id : int
+    num_recs : int | None = 10
 
 app = FastAPI()
 
@@ -15,34 +19,21 @@ app = FastAPI()
 async def get_test():
     return {"message": "You received a response"}
 
+@app.post("/tfidf_similarity")
+async def get_tfidf_recommendations(input: TFIDF_Input):
+    recommended_games = get_top_n_games(input.id, n=input.num_recs)
+    recommended_games_json = jsonable_encoder(recommended_games)
+    return {"recommended_games": recommended_games_json}
+
+
 @app.post("/particle_filtering")
-async def get_recommendations(input: Input):
+async def get_particle_filtering_recommendations(input: Particle_Filtering_Input):
     # Call your recommendation model with the input node ids to get similar game nodes
-    recommended_games = game_recommendations(input.ids)
-
-    filtered_games = []
-    for game in recommended_games:
-        add_game = True
-        if game.__getattribute__("complexity_score"):
-            if game.complexity_score < input.expected_complexity - 1.25 and game.complexity_score > input.expected_complexity + 1.25:
-                add_game = False
-
-        if game.__getattribute__("expected_play_time"):
-            if game.expected_play_time > input.expected_play_time - 45 and game.expected_play_time < input.expected_play_time + 15:
-                add_game = False
-        if add_game:
-            filtered_games.append(game)
-
-    if len(filtered_games) > 1:
-        recommended_games_json = jsonable_encoder(filtered_games)
-    else:
-        print("Couldn't find games within complexity and length requirement")
-        recommended_games_json = jsonable_encoder(recommended_games)
-    print(f"Filtered out {len(recommended_games)-len(filtered_games)} games based on complexity/length")
+    recommended_games = game_recommendations(input.ids, num_recs=input.num_recs)
+    recommended_games_json = jsonable_encoder(recommended_games)
 
     # Return the recommended nodes as a response
     return {"recommended_games": recommended_games_json}
-
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8080)
