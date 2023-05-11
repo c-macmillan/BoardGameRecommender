@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 8501
 
-CMD streamlit run --server.port 8501 --server.enableCORS false stream_lit.py
+CMD streamlit run --server.port 8501 --server.enableCORS false particle_filtering_recommendations.py

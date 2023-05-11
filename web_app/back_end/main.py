@@ -21,7 +21,7 @@ async def get_test():
 
 @app.post("/tfidf_similarity")
 async def get_tfidf_recommendations(input: TFIDF_Input):
-    recommended_games = get_top_n_games(input.id, n=input.num_recs)
+    recommended_games = get_top_n_games(input.id, num_recs=input.num_recs)
     recommended_games_json = jsonable_encoder(recommended_games)
     return {"recommended_games": recommended_games_json}
 

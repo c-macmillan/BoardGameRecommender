@@ -3,6 +3,13 @@ import requests
 import pickle
 import os
 
+st.set_page_config(
+    page_title="Board Game Recommender",
+    page_icon="🧊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 
 fastapi = os.getenv('FASTAPI_URL') ## Used if deployed to Google Run
 if fastapi is None:
@@ -49,8 +56,12 @@ with col2:
                     }
 
             # Make a GET request to the URL endpoint, passing the query parameters
-            response = requests.post(url, json=params)
-            recommended_games = response.json()['recommended_games']
+            try:
+                response = requests.post(url, json=params)
+
+                recommended_games = response.json()['recommended_games']
+            except ValueError:
+                st.error("It looks like our Neo4j Database is down (a byproduct of using the free version) contact macmillan.connor@gmail.com to get it back up and running")
         if recommended_games:
             made_recommendations = True
         else:
