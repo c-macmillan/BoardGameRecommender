@@ -40,7 +40,7 @@ with col1:
 #         "Einstein": 4
 #     }
 # expected_complexity = complexityMap[expected_complexity]
-st.write("These recommendations are based on the Particle Filtering algorithm, which is a proposed replacement of Personalized Page Ranking")
+st.write("These recommendations are based on the Particle Filtering algorithm proposed in this paper: https://openproceedings.org/2020/conf/edbt/paper_357.pdf")
 with col2:
     st.write("")
     st.write("")
