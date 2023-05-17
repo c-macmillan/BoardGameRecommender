@@ -8,7 +8,7 @@ password = os.getenv('PASSWORD')
 user_name = os.getenv('USER_NAME')
 url = os.getenv('URL')
 
-def game_recommendations(node_id_list, num_recs = 10, num_particles=10, c=0.1):
+def game_recommendations(node_id_list, num_recs = 15, num_particles=10, decay_rate=0.05):
     """
     Particle Filtering based on https://github.com/DenisGallo/Neo4j-ParticleFiltering/blob/master/src/main/java/pfiltering/ParticleFiltering.java
     Finds nodes similar to input nodes by traversing the graph using particles
@@ -47,15 +47,14 @@ def game_recommendations(node_id_list, num_recs = 10, num_particles=10, c=0.1):
         while(len(p.keys())):
             temp = {}
             for node in p.keys():
-                particles = p[node] * (1-c)
+                particles = p[node] * (1-decay_rate)
                 neighbors, total_weight = get_neighbors(transaction, node)
                 print(f"{particles} particles left to check {node}")
                 print(f"Found {len(neighbors)} Neighbors: {neighbors[:2]}... with a total weight of {total_weight}")
                 for neighbor_id, neighbor_weight in neighbors:
                     if particles <= tao:
                         break
-                    # passing = particles * (neighbor_weight / total_weight) ## Some users have rated a lot of games, so their total weight is too large and makes the particle decay instantly
-                    passing = particles * (neighbor_weight * 0.95) # All weights in the graph are (0,1]
+                    passing = particles * (neighbor_weight / total_weight)
                     if passing < tao:
                         passing = tao
                     particles -= passing
