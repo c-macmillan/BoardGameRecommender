@@ -1,6 +1,7 @@
 [theme]
-base="dark"
-primaryColor="#531c62"
-backgroundColor="#1a2331"
+base = "dark"
+primaryColor = "#531c62"
+backgroundColor = "#1a2331"
+
 [appearance]
-wid
+wide = true
